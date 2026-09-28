@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ghania Cover Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,500&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf6f3;--panel:#ffffff;--ink:#3a2a2e;--muted:#8a7479;--line:#ecdfe1;
+  --accent:#d98ca1;--accent-ink:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#1d1719;--panel:#2a2225;--ink:#f5e9ec;--muted:#b69ea5;--line:#3e3236;--accent:#e7a3b6;--accent-ink:#2a1a1f;}
+}
+:root[data-theme="dark"]{--bg:#1d1719;--panel:#2a2225;--ink:#f5e9ec;--muted:#b69ea5;--line:#3e3236;--accent:#e7a3b6;--accent-ink:#2a1a1f;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Nunito,system-ui,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:24px 16px;display:grid;gap:24px;grid-template-columns:minmax(0,1fr) 340px}
+@media (max-width:760px){main{grid-template-columns:1fr}}
+h1{font:600 24px Fraunces,serif;margin:0 0 4px}
+p.sub{margin:0 0 16px;color:var(--muted)}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;justify-content:center}
+canvas{width:100%;max-width:360px;aspect-ratio:9/16;border-radius:10px;background:#e9dde0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:14px;align-content:start}
+label{display:grid;gap:4px;font-weight:800;font-size:13px}
+input[type=text],select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.row{display:flex;gap:8px;align-items:center;font-weight:600;font-size:13px}
+button{font:800 14px Nunito,sans-serif;padding:10px 14px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.hint{color:var(--muted);font-size:12px;margin:0}
+video{display:none}
+</style>
+</head>
+<body>
+<main>
+<section>
+  <h1>Editor Sampul TikTok — Ghania</h1>
+  <p class="sub">Buka video, geser ke frame terbaik, atur teks, lalu unduh PNG 1080×1920.</p>
+  <div class="stage"><canvas id="c" width="1080" height="1920"></canvas></div>
+</section>
+<aside class="panel">
+  <label>Video (boleh pilih ketiganya)
+    <input type="file" id="file" accept="video/*" multiple>
+  </label>
+  <label>Klip<select id="clip"><option>— belum ada video —</option></select></label>
+  <label>Frame <span id="tlabel" class="hint">0.0 dtk</span>
+    <input type="range" id="time" min="0" max="1" step="0.05" value="0">
+  </label>
+  <label>Template
+    <select id="tpl">
+      <option value="label">Label pink (rapi)</option>
+      <option value="serif">Serif editorial</option>
+      <option value="diary">Diary minimal</option>
+    </select>
+  </label>
+  <label>Judul<input type="text" id="t1" value="outfit café date anti ribet"></label>
+  <label>Sub-judul<input type="text" id="t2" value="formula 3 item ☕🤍"></label>
+  <label>Posisi teks
+    <input type="range" id="ypos" min="0.12" max="0.62" step="0.01" value="0.2">
+  </label>
+  <div class="row"><input type="checkbox" id="safe" checked><span>Tampilkan area aman UI TikTok</span></div>
+  <div class="row"><input type="checkbox" id="grad" checked><span>Gradasi lembut di belakang teks</span></div>
+  <button id="dl">Unduh sampul PNG</button>
+  <p class="hint">Area aman tidak ikut terunduh. TikTok memotong sampul ke 3:4 di grid profil, jadi teks di tengah atas paling aman.</p>
+</aside>
+</main>
+<video id="v" muted playsinline preload="auto"></video>
+<script>
+const $=id=>document.getElementById(id);
+const c=$('c'),x=c.getContext('2d'),v=$('v');
+const W=1080,H=1920;let urls=[],showSafe=true;
+
+$('file').onchange=e=>{
+  urls.forEach(u=>URL.revokeObjectURL(u));
+  const fs=[...e.target.files];urls=fs.map(f=>URL.createObjectURL(f));
+  $('clip').innerHTML=fs.map((f,i)=>`<option value="${i}">Klip ${i+1} — ${f.name.slice(-12)}</option>`).join('');
+  load(0);
+};
+$('clip').onchange=e=>load(+e.target.value);
+function load(i){if(!urls[i])return;v.src=urls[i];v.onloadedmetadata=()=>{$('time').max=v.duration.toFixed(2);v.currentTime=Math.min(1,v.duration/3);};}
+v.onseeked=draw;
+$('time').oninput=e=>{v.currentTime=+e.target.value;$('tlabel').textContent=(+e.target.value).toFixed(1)+' dtk';};
+['tpl','t1','t2','ypos','grad'].forEach(id=>$(id).oninput=draw);
+$('safe').onchange=e=>{showSafe=e.target.checked;draw();};
+
+function cover(){ // draw video frame, object-fit: cover
+  if(!v.videoWidth){x.fillStyle='#eadde0';x.fillRect(0,0,W,H);x.fillStyle='#a88';x.font='700 44px Nunito';x.textAlign='center';x.fillText('Pilih video di panel kanan',W/2,H/2);return;}
+  const s=Math.max(W/v.videoWidth,H/v.videoHeight),w=v.videoWidth*s,h=v.videoHeight*s;
+  x.drawImage(v,(W-w)/2,(H-h)/2,w,h);
+}
+function wrap(t,maxW){const words=t.split(' '),lines=[];let l='';for(const w of words){const test=l?l+' '+w:w;if(x.measureText(test).width>maxW&&l){lines.push(l);l=w;}else l=test;}if(l)lines.push(l);return lines;}
+function rr(X,Y,w,h,r){x.beginPath();x.roundRect(X,Y,w,h,r);x.fill();}
+
+function draw(safe=showSafe){
+  x.clearRect(0,0,W,H);cover();
+  const y0=H*+$('ypos').value,tpl=$('tpl').value,t1=$('t1').value,t2=$('t2').value;
+  if($('grad').checked){const g=x.createLinearGradient(0,y0-260,0,y0+520);g.addColorStop(0,'rgba(255,240,244,0)');g.addColorStop(.45,'rgba(255,240,244,.55)');g.addColorStop(1,'rgba(255,240,244,0)');x.fillStyle=g;x.fillRect(0,y0-260,W,780);}
+  x.textAlign='center';x.textBaseline='top';
+  if(tpl==='label'){
+    x.font='800 96px Nunito';const L=wrap(t1,860);let y=y0;
+    L.forEach(l=>{const w=x.measureText(l).width+64;x.fillStyle='#f4b6c7';rr((W-w)/2,y-10,w,124,28);x.fillStyle='#4a2a33';x.fillText(l,W/2,y+8);y+=138;});
+    x.font='800 58px Nunito';const w2=x.measureText(t2).width+56;x.fillStyle='#ffffff';rr((W-w2)/2,y+14,w2,88,44);x.fillStyle='#b5667d';x.fillText(t2,W/2,y+28);
+  }else if(tpl==='serif'){
+    x.shadowColor='rgba(60,20,30,.35)';x.shadowBlur=18;
+    x.font='600 112px Fraunces';x.fillStyle='#ffffff';let y=y0;wrap(t1,900).forEach(l=>{x.fillText(l,W/2,y);y+=128;});
+    x.font='italic 500 60px Fraunces';x.fillStyle='#ffe3ea';x.fillText(t2,W/2,y+18);x.shadowBlur=0;
+  }else{
+    x.font='italic 500 54px Fraunces';x.fillStyle='#ffffff';x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=12;x.fillText('fashion diary',W/2,y0);
+    x.font='800 92px Nunito';let y=y0+86;wrap(t1,880).forEach(l=>{x.fillText(l,W/2,y);y+=108;});
+    x.shadowBlur=0;x.fillStyle='#f4b6c7';x.fillRect(W/2-90,y+16,180,8);
+    x.font='800 52px Nunito';x.fillStyle='#ffffff';x.shadowBlur=12;x.fillText(t2,W/2,y+50);x.shadowBlur=0;
+  }
+  if(safe){ // TikTok UI zones + 3:4 profile crop
+    x.fillStyle='rgba(217,80,110,.18)';x.fillRect(0,0,W,150);x.fillRect(0,H-420,W,420);x.fillRect(W-150,700,150,H-1120);
+    const ch=W*4/3,cy=(H-ch)/2;x.strokeStyle='rgba(255,255,255,.9)';x.setLineDash([18,14]);x.lineWidth=4;x.strokeRect(6,cy,W-12,ch);x.setLineDash([]);
+  }
+}
+$('dl').onclick=()=>{draw(false);const a=document.createElement('a');a.download='ghania-cover.png';a.href=c.toDataURL('image/png');a.click();draw();};
+document.fonts.ready.then(()=>draw());
+</script>
+</body>
+</html>
