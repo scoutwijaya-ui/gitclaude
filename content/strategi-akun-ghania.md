@@ -5,6 +5,35 @@ TikTok **@ghniaaynda** · Instagram **@ghaniaayundaaa** · disusun 29 Sep 2026 (
 
 ---
 
+## 0. Audit dari screenshot (29 Sep 2026)
+Sumber: screenshot profil TikTok & Instagram dari pengguna. Angka views per video dibaca dari thumbnail beresolusi rendah → **perkiraan**.
+
+**TikTok (@ghniaaynda):** nama tampilan "Butterscotch", 530 pengikut, 31 mengikuti, 1.469 suka, ±28 video + 1 terjadwal (30-9). Bio "Feminime fashion, beauty, dan café diaries" (typo: *Feminine*), "ig: …" tidak jelas terbaca.
+**Instagram (@ghaniaayundaaa):** nama "Butterscotch", 6 kiriman, 3 pengikut, 10 diikuti, bio sudah memakai draf "AI fashion diary…", highlight kosong.
+
+| Pola (perkiraan views) | Contoh | Bacaan |
+|---|---|---|
+| **Kolase multi-outfit / "ideas"** | kolase 6 look ±4 rb; "3 OUTFIT IDEAS" ±1,8 rb; "OOTD IDEAS" ±1,1–1,2 rb; "LOOK" kolase ±1 rb | Konsisten tertinggi → format jangkar |
+| Outfit tunggal + teks judul | "outfit café date" ±650; gingham ±470–530; seri sweater merah 600–1,2 rb | Sedang |
+| Close-up wajah / talking tanpa outfit | wajah pirang 200–565; kasur ±100 | Terendah |
+| Video tanpa teks judul di cover | beberapa 100–350 | Rendah |
+
+**Temuan utama**
+1. **Identitas terpecah:** nama "Butterscotch", handle "ghniaaynda"/"ghaniaayundaaa", dan persona "Ghania" — tiga nama berbeda. Penonton tidak tahu siapa "tokohnya".
+2. **Wajah tidak konsisten:** beberapa video menampilkan perempuan pirang yang jelas bukan Ghania; ada juga beberapa variasi wajah Ghania. Ini melemahkan pengenalan karakter. Bila wajah itu menyerupai orang nyata/figur publik, **hapus/arsipkan** — TikTok tidak mengizinkan AI yang memakai kemiripan orang nyata untuk endorsement komersial.
+3. **Format yang menang sudah terlihat:** kolase/listicle multi-outfit mengungguli video satu look dan close-up. Perbanyak itu.
+4. **Cover tidak seragam:** sebagian ada judul besar, sebagian tidak. Grid profil tidak langsung menjelaskan "akun apa ini".
+5. **Instagram baru mulai (6 post, 3 pengikut):** belum ada data; pakai IG sebagai arsip rapi + carousel, distribusi awal dari TikTok.
+6. **Label AI:** tidak terlihat dari grid — pastikan toggle "AI-generated" aktif di tiap video.
+
+**Prioritas 7 hari**
+1. Pilih **satu nama**: disarankan "Ghania · AI fashion diary" di kedua platform (atau pakai "Butterscotch" di keduanya — yang penting sama).
+2. Perbaiki bio TikTok: `AI fashion diary 🤍 formula outfit simpel yang kelihatan effort · IG @ghaniaayundaaa`.
+3. Arsipkan video dengan wajah bukan Ghania.
+4. 3 dari 4 video minggu ini = **kolase/listicle multi-outfit** dengan wajah Ghania yang sama; cover teks besar "5 OUTFIT …".
+5. Pin 3 video tertinggi (kolase ±4 rb, 3 OUTFIT IDEAS, OOTD IDEAS).
+6. IG: unggah ulang 3 video TikTok terbaik sebagai Reels + 1 carousel "Bedah Outfit"; buat 3 highlight.
+
 ## 1. Audit cepat — isi sendiri (5 menit)
 Kirim screenshot bagian ini agar audit bisa dibuat berbasis data:
 
