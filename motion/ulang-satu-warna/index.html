@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Ulang Satu Warna</title>
+<link rel="stylesheet" href="./node_modules/@fontsource/cormorant-garamond/500.css">
+<link rel="stylesheet" href="./node_modules/@fontsource/cormorant-garamond/500-italic.css">
+<link rel="stylesheet" href="./node_modules/@fontsource/montserrat/400.css">
+<link rel="stylesheet" href="./node_modules/@fontsource/montserrat/600.css">
+<script type="importmap">
+{ "imports": {
+  "gsap": "./node_modules/gsap/index.js",
+  "gsap/": "./node_modules/gsap/"
+} }
+</script>
+<style>
+  :root { --cream: #f4ece1; --ivory: #fbf7f1; --pink: #f2c9cf; --camel: #b98d6b; --ink: #3a2a22; }
+  html, body { margin: 0; background: #000; }
+  #mg-root { position: relative; width: var(--W); height: var(--H); overflow: hidden; background: var(--cream); color: var(--ink); }
+  .layer { position: absolute; inset: 0; }
+  #bg { background: radial-gradient(80% 50% at 50% 42%, var(--ivory) 0%, var(--cream) 60%, #eadccb 100%); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+  #blob1 { width: 700px; height: 700px; left: -220px; top: 180px; background: var(--pink); }
+  #blob2 { width: 640px; height: 640px; right: -240px; top: 1100px; background: #e8d3bd; }
+  #grain { width: 100%; height: 100%; mix-blend-mode: multiply; opacity: .18; pointer-events: none; }
+
+  .card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; text-align: center; box-sizing: border-box; padding: 0 90px; }
+  .kicker { font: 600 32px/1 Montserrat, sans-serif; letter-spacing: .42em; text-transform: uppercase; color: var(--camel); white-space: nowrap; }
+  .serif { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-variant-numeric: lining-nums; }
+  .it { font-style: italic; }
+  .m { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: .08em; }
+  .m > span { display: inline-block; white-space: nowrap; }
+  .sans { font: 400 46px/1.25 Montserrat, sans-serif; }
+
+  /* Beat 1: hook */
+  #hook { top: 360px; }
+  #hook .big { font-size: 168px; line-height: .92; margin-top: 34px; }
+  .dot { position: absolute; width: 74px; height: 74px; border-radius: 50%; }
+
+  /* Beat 2 */
+  #c2 { top: 400px; }
+  #c2 .big { font-size: 150px; line-height: .95; }
+  .hlwrap { position: relative; isolation: isolate; display: inline-block; white-space: nowrap; }
+  .hl { position: absolute; left: -14px; right: -14px; bottom: 14px; height: 58px; background: var(--pink); z-index: -1; border-radius: 6px; }
+
+  /* Beats 3-4: swatch diagram */
+  #c3 { top: 340px; }
+  #c3 .big { font-size: 112px; line-height: 1; margin-top: 30px; }
+  .sw { position: absolute; width: 300px; height: 300px; border-radius: 50%; background: var(--camel);
+        box-shadow: 0 30px 60px rgba(90,60,40,.22), inset 0 -18px 40px rgba(0,0,0,.12); display: flex; align-items: center; justify-content: center; }
+  .sw svg { width: 150px; height: 150px; }
+  .lbl { position: absolute; width: 300px; text-align: center; font: 600 40px/1 Montserrat, sans-serif; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+  #link { position: absolute; left: 0; top: 0; overflow: visible; }
+
+  /* Beat 5: before / after */
+  #c5 { top: 330px; }
+  .panels { display: flex; gap: 40px; margin-top: 50px; }
+  .panel { width: 430px; height: 640px; border-radius: 36px; background: rgba(255,255,255,.7); box-shadow: 0 30px 70px rgba(90,60,40,.15);
+           display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; position: relative; }
+  .panel .tag { font: 600 34px/1 Montserrat, sans-serif; letter-spacing: .3em; text-transform: uppercase; white-space: nowrap; }
+  .mini { width: 180px; height: 180px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .mini svg { width: 92px; height: 92px; }
+  #note { margin-top: 56px; font-size: 76px; }
+
+  /* Beat 6: CTA */
+  #c6 { top: 520px; }
+  #c6 .big { font-size: 172px; line-height: .92; margin: 40px 0 50px; }
+  .pill { font: 600 40px/1 Montserrat, sans-serif; padding: 30px 56px; border-radius: 999px; background: var(--ink); color: var(--ivory); white-space: nowrap; letter-spacing: .04em; }
+  #sig { margin-top: 70px; font-size: 64px; }
+  .series { margin-top: 18px; font: 400 32px/1 Montserrat, sans-serif; letter-spacing: .2em; text-transform: uppercase; opacity: .7; white-space: nowrap; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="bag" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 38 h64 l-6 50 h-52 z"/><path d="M34 38 v-8 a16 16 0 0 1 32 0 v8"/></g></symbol>
+    <symbol id="shoe" viewBox="0 0 100 100"><g fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 70 v-30 l16 6 q14 6 26 0 l12 10 q20 4 24 14 v6 h-78 z"/><path d="M12 64 h78"/></g></symbol>
+  </defs>
+</svg>
+<div id="mg-root">
+  <div class="layer" id="bg"><div class="blob" id="blob1"></div><div class="blob" id="blob2"></div></div>
+  <div class="layer" id="dots"></div>
+
+  <div class="card" id="hook">
+    <div class="kicker">Satu Detail, Beda Kesan</div>
+    <div class="serif big"><span class="hw">Outfit</span><br><span class="hw it">terasa</span> <span class="hw it">ramai?</span></div>
+  </div>
+
+  <div class="card" id="c2">
+    <div class="serif big"><span class="w2">Coba</span> <span class="w2">ulang</span><br><span class="hlwrap w2"><span class="hl"></span><span class="it">satu warna.</span></span></div>
+  </div>
+
+  <div class="card" id="c3">
+    <div class="kicker" id="k3">Detail kecil hari ini</div>
+    <div class="serif big"><span class="m"><span id="t3a">Pilih 1 warna aksen</span></span></div>
+    <div class="serif big it" style="position:absolute; top:172px; left:0; right:0"><span class="m"><span id="t3b">Ulangi di detail lain</span></span></div>
+  </div>
+  <div class="layer" id="diagram">
+    <svg id="link" width="1080" height="1920"><path id="linkpath" d="M 430 1050 C 500 1170, 560 1190, 640 1200" fill="none" stroke="#b98d6b" stroke-width="6" stroke-dasharray="4 18" stroke-linecap="round"/></svg>
+    <div class="sw" id="swA" style="left:150px; top:820px; color:#fbf7f1"><svg><use href="#bag"/></svg></div>
+    <div class="lbl" id="lA" style="left:150px; top:1150px">Tas</div>
+    <div class="sw" id="swB" style="left:630px; top:1040px; color:#fbf7f1"><svg><use href="#shoe"/></svg></div>
+    <div class="lbl" id="lB" style="left:630px; top:1370px">Sepatu</div>
+  </div>
+
+  <div class="card" id="c5">
+    <div class="kicker">Bandingkan</div>
+    <div class="panels">
+      <div class="panel" id="pA">
+        <div class="tag" style="opacity:.6">Sebelum</div>
+        <div class="mini" style="background:#2b2b2b; color:#f4ece1"><svg><use href="#bag"/></svg></div>
+        <div class="mini" style="background:#ffffff; color:#3a2a22; box-shadow: inset 0 0 0 4px #e3d8cb"><svg><use href="#shoe"/></svg></div>
+      </div>
+      <div class="panel" id="pB">
+        <div class="tag" style="color:var(--camel)">Sesudah</div>
+        <div class="mini" style="background:var(--camel); color:#fbf7f1"><svg><use href="#bag"/></svg></div>
+        <div class="mini" style="background:var(--camel); color:#fbf7f1"><svg><use href="#shoe"/></svg></div>
+      </div>
+    </div>
+    <div class="serif it" id="note">Pilihan styling,<br>bukan aturan wajib.</div>
+  </div>
+
+  <div class="card" id="c6">
+    <div class="kicker">Tas krem · Sepatu krem</div>
+    <div class="serif big"><span class="w6">Simpan</span> <span class="w6">buat</span><br><span class="w6 it">ide besok.</span></div>
+    <div class="pill" id="pill">🎀 Simpan idenya</div>
+    <div class="serif it" id="sig">Ghania Ayunda</div>
+    <div class="series">Satu Detail, Beda Kesan · #1</div>
+  </div>
+
+  <div class="layer"><canvas id="grain"></canvas></div>
+</div>
+
+<script type="module">
+import { MG, gsap } from './runtime/mg.js';
+
+MG.config({ width: 1080, height: 1920, fps: 30, duration: 14, background: '#f4ece1' });
+MG.grain('#grain', { amount: 0.06 });
+
+// Beat times on a 120 BPM grid (0.5 s per beat).
+const B = { hook: 0, calm: 1.5, c2: 2.0, c3: 4.0, c4: 6.5, c5: 9.0, c6: 11.5, end: 14 };
+const tl = MG.tl;
+
+// Background is always alive.
+tl.fromTo('#blob1', { x: 0, y: 0 }, { x: 160, y: 120, duration: B.end, ease: 'none' }, 0);
+tl.fromTo('#blob2', { x: 0, y: 0 }, { x: -140, y: -160, duration: B.end, ease: 'none' }, 0);
+
+// ---- Beat 1: "ramai" — a busy cloud of mismatched colour dots, visible at frame 0.
+const busy = ['#2b2b2b', '#e85d75', '#4a7bd0', '#f2b134', '#3fa47a', '#9b6bd3', '#ffffff', '#e2733d', '#2b2b2b', '#4a7bd0', '#e85d75', '#f2b134'];
+const rnd = MG.rand(7);
+const dots = busy.map((c, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot';
+  d.style.background = c;
+  if (c === '#ffffff') d.style.boxShadow = 'inset 0 0 0 3px #e3d8cb';
+  // Ring below the headline, inside the safe zone.
+  const a = (i / busy.length) * Math.PI * 2;
+  d.dataset.x = 540 - 37 + Math.cos(a) * (260 + rnd() * 90);
+  d.dataset.y = 1150 - 37 + Math.sin(a) * (180 + rnd() * 70);
+  gsap.set(d, { x: +d.dataset.x, y: +d.dataset.y });
+  document.getElementById('dots').appendChild(d);
+  return d;
+});
+dots.forEach((d, i) => {
+  // jitter = visual noise
+  tl.fromTo(d, { scale: 0.6 + (i % 3) * 0.2 }, { scale: 1.1, duration: 0.25, repeat: 5, yoyo: true, ease: 'sine.inOut' }, i * 0.04);
+  // calm: everything collapses into one camel swatch at the centre
+  tl.to(d, { x: 540 - 37, y: 1150 - 37, backgroundColor: '#b98d6b', boxShadow: 'none', scale: 1, duration: 0.6, ease: 'cine' }, B.calm + i * 0.015);
+});
+tl.to(dots, { scale: 0, opacity: 0, duration: 0.35, ease: 'snap' }, B.c2 + 0.3);
+
+const hw = gsap.utils.toArray('.hw');
+tl.fromTo(hw, { y: 60, opacity: 0.001 }, { y: 0, opacity: 1, duration: 0.5, stagger: 0.12, ease: 'cineOut' }, 0);
+gsap.set(hw[0], { opacity: 1, y: 0 });                         // frame 0 already reads "Outfit"
+tl.fromTo('#hook .kicker', { letterSpacing: '0.55em', opacity: 0.8 }, { letterSpacing: '0.42em', opacity: 1, duration: 1.2 }, 0);
+tl.to('#hook', { opacity: 0, y: -60, filter: 'blur(10px)', duration: 0.4, ease: 'snap' }, B.c2 - 0.2);
+
+// ---- Beat 2: "Coba ulang satu warna."
+gsap.set('#c2', { opacity: 0 });
+tl.set('#c2', { opacity: 1 }, B.c2);
+tl.from('.w2', { scale: 1.8, opacity: 0, duration: 0.45, stagger: 0.25, ease: 'punch', transformOrigin: '50% 60%' }, B.c2);
+tl.fromTo('.hl', { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: 'cineOut', transformOrigin: '0 50%' }, B.c2 + 0.9);
+tl.to('#c2', { scale: 1.06, duration: 1.5, ease: 'none' }, B.c2 + 0.5);
+tl.to('#c2', { opacity: 0, filter: 'blur(12px)', duration: 0.25, ease: 'snap' }, B.c3 - 0.15);
+
+// ---- Beats 3-4: swatch diagram
+gsap.set(['#c3', '#diagram'], { opacity: 0 });
+tl.set(['#c3', '#diagram'], { opacity: 1 }, B.c3);
+
+tl.fromTo('#k3', { opacity: 0, letterSpacing: '0.9em' }, { opacity: 1, letterSpacing: '0.42em', duration: 1 }, B.c3);
+tl.fromTo('#t3a', { yPercent: 110 }, { yPercent: 0, duration: 0.7, ease: 'cineOut' }, B.c3 + 0.2);
+tl.fromTo('#swA', { scale: 0, rotate: -40 }, { scale: 1, rotate: 0, duration: 0.7, ease: 'punch' }, B.c3 + 0.5);
+tl.fromTo('#lA', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, B.c3 + 1.0);
+gsap.set(['#swB', '#lB'], { opacity: 0 });
+// beat 4: line replaces, second swatch copies the colour
+tl.to('#t3a', { yPercent: -110, duration: 0.4, ease: 'snap' }, B.c4);
+tl.fromTo('#t3b', { yPercent: 110 }, { yPercent: 0, duration: 0.5, ease: 'snap' }, B.c4 + 0.1);
+const lp = document.getElementById('linkpath');
+const L = lp.getTotalLength();
+gsap.set(lp, { attr: { 'stroke-dasharray': L } });
+tl.fromTo(lp, { attr: { 'stroke-dashoffset': L } }, { attr: { 'stroke-dashoffset': 0 }, duration: 0.8, ease: 'cine' }, B.c4 + 0.2);
+tl.fromTo('#swB', { opacity: 1, scale: 0, x: -480, y: -220 }, { scale: 1, x: 0, y: 0, duration: 0.9, ease: 'cine' }, B.c4 + 0.3);
+tl.fromTo('#lB', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, B.c4 + 1.0);
+tl.to(['#swA', '#swB'], { y: '-=14', duration: 0.5, yoyo: true, repeat: 1, stagger: 0.25, ease: 'sine.inOut' }, B.c4 + 1.3);
+tl.to(['#c3', '#diagram'], { opacity: 0, scale: 0.94, duration: 0.35, ease: 'snap' }, B.c5 - 0.3);
+
+// ---- Beat 5: before / after
+gsap.set('#c5', { opacity: 0 });
+tl.set('#c5', { opacity: 1 }, B.c5);
+tl.fromTo('#c5 .kicker', { opacity: 0 }, { opacity: 1, duration: 0.5 }, B.c5);
+tl.fromTo('#pA', { x: -500, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'cineOut' }, B.c5);
+tl.fromTo('#pB', { x: 500, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'cineOut' }, B.c5 + 0.5);
+tl.to('#pA', { scale: 0.95, filter: 'saturate(0.3)', opacity: 0.75, duration: 0.6 }, B.c5 + 1.0);
+tl.to('#pB', { scale: 1.04, duration: 0.6, ease: 'punch' }, B.c5 + 1.0);
+tl.fromTo('#note', { opacity: 0, y: 30, filter: 'blur(10px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.7 }, B.c5 + 1.2);
+tl.to('#c5', { opacity: 0, y: -50, duration: 0.35, ease: 'snap' }, B.c6 - 0.3);
+
+// ---- Beat 6: CTA, held ~2 s
+gsap.set('#c6', { opacity: 0 });
+tl.set('#c6', { opacity: 1 }, B.c6);
+tl.fromTo('#c6 .kicker', { opacity: 0, letterSpacing: '0.8em' }, { opacity: 1, letterSpacing: '0.42em', duration: 1 }, B.c6);
+tl.from('.w6', { yPercent: 60, opacity: 0, duration: 0.6, stagger: 0.15, ease: 'cineOut' }, B.c6 + 0.1);
+tl.fromTo('#pill', { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'punch' }, B.c6 + 0.7);
+tl.fromTo(['#sig', '#c6 .series'], { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.15 }, B.c6 + 0.9);
+tl.to('#c6', { scale: 1.03, duration: 2.5, ease: 'none' }, B.c6);
+
+MG.start();
+</script>
+</body>
+</html>
