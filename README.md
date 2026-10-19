@@ -38,17 +38,17 @@ Paket social marketing (TikTok + Instagram) untuk karakter **Ghania Ayunda**: ka
 
 # Skill — Reel Motion Studio
 
-Skill eksklusif pembuatan motion video graphic vertikal, diturunkan dari analisis 6 reel Instagram referensi. Ada di [`skills/reel-motion-studio/`](skills/reel-motion-studio/SKILL.md).
+Skill eksklusif pembuatan motion video graphic vertikal, diturunkan dari analisis 6 reel Instagram referensi. Ada di [`.claude/skills/reel-motion-studio/`](.claude/skills/reel-motion-studio/SKILL.md).
 
 | File | Isi |
 |---|---|
-| [SKILL.md](skills/reel-motion-studio/SKILL.md) | Alur kerja, kontrak render, aturan, dan batasan |
-| [analisis-6-reel.md](skills/reel-motion-studio/references/analisis-6-reel.md) | Analisis tiap reel dan pola bersama |
-| [gaya-dan-resep.md](skills/reel-motion-studio/references/gaya-dan-resep.md) | Resep produksi 5 gaya (A–E) |
-| [timing-easing-audio.md](skills/reel-motion-studio/references/timing-easing-audio.md) | Grid BPM, easing, peta sound design |
-| [hud-showreel.html](skills/reel-motion-studio/templates/hud-showreel.html) | Template gaya A yang sudah teruji |
-| [render.mjs](skills/reel-motion-studio/scripts/render.mjs) | Renderer HTML → MP4/PNG (Playwright + ffmpeg) |
+| [SKILL.md](.claude/skills/reel-motion-studio/SKILL.md) | Alur kerja, kontrak render, aturan, dan batasan |
+| [analisis-6-reel.md](.claude/skills/reel-motion-studio/references/analisis-6-reel.md) | Analisis tiap reel dan pola bersama |
+| [gaya-dan-resep.md](.claude/skills/reel-motion-studio/references/gaya-dan-resep.md) | Resep produksi 5 gaya (A–E) |
+| [timing-easing-audio.md](.claude/skills/reel-motion-studio/references/timing-easing-audio.md) | Grid BPM, easing, peta sound design |
+| [hud-showreel.html](.claude/skills/reel-motion-studio/templates/hud-showreel.html) | Template gaya A yang sudah teruji |
+| [render.mjs](.claude/skills/reel-motion-studio/scripts/render.mjs) | Renderer HTML → MP4/PNG (Playwright + ffmpeg) |
 
-![Pratinjau template HUD showreel](skills/reel-motion-studio/assets/preview-hud-showreel.jpg)
+![Pratinjau template HUD showreel](.claude/skills/reel-motion-studio/assets/preview-hud-showreel.jpg)
 
-Pasang sebagai skill: zip folder `skills/reel-motion-studio` lalu unggah di pengaturan Skills claude.ai, atau salin ke `~/.claude/skills/` untuk Claude Code.
+Sudah terpasang sebagai project skill Claude Code (`.claude/skills/`), otomatis aktif di setiap sesi Claude Code pada repo ini. Untuk claude.ai: zip folder ini lalu unggah lewat pengaturan Skills.
