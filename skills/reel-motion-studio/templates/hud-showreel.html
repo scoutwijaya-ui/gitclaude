@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>HUD Showreel</title>
+<!--
+  Template gaya A "Code-HUD Showreel" (referensi: reel DdzH3FpONMD & DeKUZvGsiDk).
+  Kontrak render:
+    - window.MOTION = { width, height, fps, duration }
+    - window.renderAt(t)  -> menggambar frame pada detik t. Murni fungsi dari t.
+    - window.ready        -> Promise yang selesai saat font siap.
+  Jangan pakai CSS animation/transition, requestAnimationFrame, Date.now(), Math.random().
+  Ubah CONFIG dan SCENES; mesin di bawah tidak perlu disentuh.
+-->
+<style>
+  :root {
+    --W: 1080px; --H: 1920px;
+    --accent: #E63B1E; --paper: #EBE7DF; --ink: #121314; --white: #FFFFFF;
+    --display: "Inter Display", "Inter", "Liberation Sans", sans-serif;
+    --serif: "DejaVu Serif", "Liberation Serif", Georgia, serif;
+    --mono: "Liberation Mono", "DejaVu Sans Mono", monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: var(--W); height: var(--H); overflow: hidden; background: var(--ink); }
+  #stage { position: relative; width: var(--W); height: var(--H); overflow: hidden; background: var(--ink); }
+  .layer { position: absolute; inset: 0; }
+  .center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+  .display { font-family: var(--display); font-weight: 900; letter-spacing: -0.04em; line-height: .86; }
+  .serif { font-family: var(--serif); font-style: italic; font-weight: 400; }
+  .mono { font-family: var(--mono); font-size: 26px; letter-spacing: .08em; text-transform: uppercase; }
+  canvas { position: absolute; inset: 0; }
+  /* HUD selalu di atas */
+  #hud { position: absolute; inset: 0; pointer-events: none; z-index: 50; color: var(--white); }
+  .tick { position: absolute; width: 56px; height: 56px; border-color: currentColor; border-style: solid; border-width: 0; }
+  .marquee-row { position: absolute; left: 0; white-space: nowrap; font-size: 170px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="fx" width="1080" height="1920"></canvas>
+  <div id="scenes" class="layer"></div>
+  <div id="hud">
+    <div class="tick" style="left:56px;top:56px;border-left-width:4px;border-top-width:4px"></div>
+    <div class="tick" style="right:56px;top:56px;border-right-width:4px;border-top-width:4px"></div>
+    <div class="tick" style="left:56px;bottom:56px;border-left-width:4px;border-bottom-width:4px"></div>
+    <div class="tick" style="right:56px;bottom:56px;border-right-width:4px;border-bottom-width:4px"></div>
+    <div class="mono" id="hud-title" style="position:absolute;left:136px;top:72px"></div>
+    <div class="mono" id="hud-tc" style="position:absolute;right:136px;top:72px"></div>
+    <div class="mono" id="hud-chapter" style="position:absolute;left:136px;bottom:132px"></div>
+    <div class="mono" id="hud-bpm" style="position:absolute;right:136px;bottom:132px"></div>
+    <div style="position:absolute;left:136px;right:136px;bottom:100px;height:4px;background:currentColor;opacity:.25"></div>
+    <div style="position:absolute;left:136px;right:136px;bottom:100px;height:4px">
+      <div id="hud-bar" style="height:100%;width:0;background:currentColor"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================ CONFIG ============================
+const CONFIG = {
+  title: "SHOWREEL '26",
+  brand: "STUDIO.",          // wordmark outro; titik terakhir diberi warna aksen
+  role: "motion designer",
+  cta: "● OPEN FOR PROJECTS",
+  words: ["SHAPE", "BREAK", "MOVE"],          // dibanting di scene TYPE
+  formLabel: "form.",
+  systemsLabel: "systems",
+  stats: [ ["FRAMES RENDERED", 360], ["EASING CURVES", 32], ["KEYFRAMES BY HAND", 0] ],
+  marquee: "MOTION",
+  bpm: 120,
+};
+window.MOTION = { width: 1080, height: 1920, fps: 30, duration: 12 };
+
+// Durasi scene dalam ketukan (120 BPM = 0.5 s/ketuk). Total harus = duration.
+// hud = warna HUD di atas scene itu (gelap di latar terang/merah, putih di latar gelap).
+const BEAT = 60 / CONFIG.bpm;
+const SCENES = [
+  { id: "init",    beats: 2, label: "INIT",      hud: "#fff" },
+  { id: "type",    beats: 4, label: "TYPE",      hud: "#121314" },
+  { id: "form",    beats: 4, label: "FORM",      hud: "#121314" },
+  { id: "systems", beats: 4, label: "SYSTEMS",   hud: "#fff" },
+  { id: "data",    beats: 4, label: "INTERFACE", hud: "#121314" },
+  { id: "rhythm",  beats: 3, label: "RHYTHM",    hud: "#fff" },
+  { id: "outro",   beats: 3, label: "OUTRO",     hud: "#fff" },
+];
+
+// ============================ UTIL ==============================
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const prog = (t, a, b) => clamp((t - a) / (b - a));      // 0..1 di rentang [a,b]
+const E = {
+  expoOut: k => (k >= 1 ? 1 : 1 - Math.pow(2, -10 * k)),
+  expoIn: k => (k <= 0 ? 0 : Math.pow(2, 10 * k - 10)),
+  expoInOut: k => k <= 0 ? 0 : k >= 1 ? 1 : k < .5 ? Math.pow(2, 20 * k - 10) / 2 : (2 - Math.pow(2, -20 * k + 10)) / 2,
+  backOut: k => { const c = 1.70158, d = k - 1; return 1 + (c + 1) * d * d * d + c * d * d; },
+  sineInOut: k => -(Math.cos(Math.PI * k) - 1) / 2,
+};
+// angka acak deterministik
+const rand = seed => { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
+const $ = id => document.getElementById(id);
+const el = (html) => { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; };
+
+// susun waktu mulai tiap scene
+let acc = 0;
+for (const s of SCENES) { s.start = acc; s.dur = s.beats * BEAT; acc += s.dur; s.end = acc; }
+
+// ============================ SCENE DOM =========================
+const root = $("scenes");
+const S = {};
+S.init = el(`<div class="layer">
+  <div class="center display" style="font-size:900px;color:rgba(255,255,255,.06)">'26</div>
+  <div id="init-ring" class="center" style="width:300px;height:300px;border:4px solid #fff;border-radius:50%"></div>
+  <div id="init-dot" class="center" style="width:60px;height:140px;border-radius:30px;background:var(--accent)"></div>
+  <div id="init-iris" class="center" style="width:10px;height:10px;border-radius:50%;background:var(--accent)"></div>
+</div>`);
+S.type = el(`<div class="layer" style="background:var(--accent)">
+  <div class="mono" style="position:absolute;left:136px;top:520px;color:var(--ink)">CAP HEIGHT ——————————</div>
+  <div class="mono" style="position:absolute;left:136px;top:1190px;color:var(--ink)">BASELINE ——————————</div>
+  <div id="type-word" class="center display" style="font-size:250px;color:var(--ink)"></div>
+  <div id="type-slice" class="layer" style="background:var(--ink)"></div>
+  <div class="mono" style="position:absolute;left:0;right:0;top:1300px;text-align:center;color:var(--ink)">THE FOUR VERBS OF MOTION</div>
+</div>`);
+S.form = el(`<div class="layer" style="background:var(--paper)">
+  <div id="form-label" class="serif" style="position:absolute;left:136px;top:260px;font-size:150px;color:var(--ink)"></div>
+  <div class="mono" style="position:absolute;left:140px;top:450px;color:var(--ink)">FIG. 02 — COMPOSITION IN PRIMITIVES</div>
+  <div id="form-circle" style="position:absolute;left:290px;top:760px;width:500px;height:500px;border-radius:50%;background:var(--ink)"></div>
+  <div id="form-half" style="position:absolute;left:290px;top:760px;width:500px;height:250px;border-radius:250px 250px 0 0;background:var(--accent)"></div>
+  <div id="form-tri" style="position:absolute;left:150px;top:1380px;width:0;height:0;border-left:110px solid transparent;border-right:110px solid transparent;border-bottom:190px solid var(--ink)"></div>
+  <div id="form-diamond" style="position:absolute;left:720px;top:1400px;width:160px;height:160px;background:var(--ink)"></div>
+  <div id="form-pill" style="position:absolute;left:420px;top:1460px;width:220px;height:70px;border-radius:35px;background:var(--accent)"></div>
+</div>`);
+S.systems = el(`<div class="layer">
+  <div class="mono" style="position:absolute;left:136px;top:200px;color:#fff;line-height:1.6">PARTICLES: 1,200<br><span id="sys-rot">ROT.Y: 000.0°</span><br><span id="sys-state">STATE: SPHERE</span></div>
+  <div id="sys-label" class="serif" style="position:absolute;left:0;right:0;top:1500px;text-align:center;font-size:150px;color:#fff"></div>
+</div>`);
+S.data = el(`<div class="layer" style="background:var(--paper);color:var(--ink)">
+  <div id="data-cards"></div>
+</div>`);
+S.rhythm = el(`<div class="layer" style="background:var(--ink)"><div id="rhythm-rows"></div></div>`);
+S.outro = el(`<div class="layer" style="background:var(--ink)">
+  <div id="outro-glow" class="center" style="width:900px;height:900px;border-radius:50%;background:radial-gradient(circle, rgba(230,59,30,.45), rgba(230,59,30,0) 65%)"></div>
+  <div id="outro-brand" class="center display" style="font-size:210px;color:#fff;white-space:nowrap"></div>
+  <div id="outro-role" class="serif" style="position:absolute;left:0;right:0;top:1070px;text-align:center;font-size:90px;color:var(--accent)"></div>
+  <div id="outro-cta" class="mono" style="position:absolute;left:0;right:0;top:1290px;text-align:center;color:var(--accent)"></div>
+</div>`);
+for (const s of SCENES) { S[s.id].style.display = "none"; root.appendChild(S[s.id]); }
+
+// isi teks dari CONFIG
+$("form-label").textContent = CONFIG.formLabel;
+$("sys-label").textContent = CONFIG.systemsLabel;
+const brandMain = CONFIG.brand.replace(/\.$/, "");
+$("outro-brand").innerHTML = brandMain + (CONFIG.brand.endsWith(".") ? '<span style="color:var(--accent)">.</span>' : "");
+$("outro-role").textContent = CONFIG.role;
+$("outro-cta").textContent = CONFIG.cta;
+$("hud-title").textContent = CONFIG.title;
+const cards = $("data-cards");
+CONFIG.stats.forEach(([label], i) => {
+  cards.appendChild(el(`<div id="card-${i}" style="position:absolute;left:136px;right:136px;top:${430 + i * 360}px;height:320px;border:4px solid var(--ink);border-radius:28px;padding:40px">
+    <div class="mono">${label}</div>
+    <div id="card-val-${i}" class="display" style="font-size:150px;margin-top:30px">0</div>
+  </div>`));
+});
+const rows = $("rhythm-rows");
+for (let i = 0; i < 9; i++) {
+  const bold = i % 2 === 0;
+  const word = bold ? CONFIG.marquee.toUpperCase() : CONFIG.marquee.toLowerCase();
+  rows.appendChild(el(`<div id="row-${i}" class="marquee-row ${bold ? "display" : "serif"}" style="top:${110 + i * 190}px;color:${i === 4 ? "var(--accent)" : "#fff"}">${(word + " • ").repeat(10)}</div>`));
+}
+
+// ============================ PARTIKEL ==========================
+const ctx = $("fx").getContext("2d");
+const R = rand(7);
+const PTS = Array.from({ length: 1200 }, () => {
+  const u = R() * 2 - 1, th = R() * Math.PI * 2, r = Math.sqrt(1 - u * u);
+  return { x: r * Math.cos(th), y: u, z: r * Math.sin(th), red: R() < .25 };
+});
+
+// ============================ RENDER ============================
+function renderScene(id, lt, d, t) {
+  const n = lt / d; // progres lokal 0..1
+  if (id === "init") {
+    const drop = E.backOut(prog(lt, 0, .45));
+    $("init-dot").style.transform = `translate(-50%, ${lerp(-900, -50, drop)}%)`;
+    $("init-ring").style.transform = `translate(-50%,-50%) scale(${lerp(.6, 1, E.expoOut(prog(lt, 0, .5)))})`;
+    const iris = E.expoIn(prog(lt, .55, d));
+    $("init-iris").style.transform = `translate(-50%,-50%) scale(${iris * 260})`;
+  }
+  if (id === "type") {
+    const per = d / CONFIG.words.length;
+    const i = Math.min(CONFIG.words.length - 1, Math.floor(lt / per));
+    const k = (lt - i * per) / per;
+    const w = $("type-word");
+    w.textContent = CONFIG.words[i];
+    const slam = E.expoOut(prog(k, 0, .35));
+    w.style.transform = `translate(-50%,-50%) scale(${lerp(1.6, 1, slam)}) scaleX(${lerp(.6, 1, slam)})`;
+    w.style.letterSpacing = `${lerp(.2, -.04, slam)}em`;
+    // irisan diagonal menutup kata di akhir tiap ketukan kata
+    const cut = E.expoIn(prog(k, .8, 1));
+    $("type-slice").style.clipPath = `polygon(0 ${100 - cut * 140}%, 100% ${140 - cut * 140}%, 100% 100%, 0 100%)`;
+  }
+  if (id === "form") {
+    const inK = E.expoOut(prog(lt, 0, .6));
+    $("form-label").style.transform = `translateX(${lerp(-700, 0, inK)}px)`;
+    $("form-circle").style.transform = `scale(${inK})`;
+    $("form-half").style.transform = `translateX(${lerp(0, 0, inK)}px) rotate(${E.expoInOut(prog(lt, .6, 1.4)) * 180}deg)`;
+    $("form-half").style.transformOrigin = "50% 100%";
+    $("form-tri").style.transform = `translateY(${-Math.abs(Math.sin(lt * Math.PI * 2 / BEAT)) * 40}px)`;
+    $("form-diamond").style.transform = `rotate(${E.expoOut(prog(lt, .9, 1.5)) * 45}deg)`;
+    $("form-pill").style.transform = `scaleX(${E.expoOut(prog(lt, .3, .9))})`;
+    const out = E.expoIn(prog(lt, d - .25, d));
+    S.form.style.transform = `scale(${1 - out * .9})`;
+  }
+  if (id === "systems") {
+    const rot = lt * 1.6;
+    const collapse = E.expoInOut(prog(lt, d * .62, d * .9));
+    $("sys-rot").textContent = `ROT.Y: ${((rot * 180 / Math.PI) % 360).toFixed(1).padStart(5, "0")}°`;
+    $("sys-state").textContent = collapse > .5 ? "STATE: POINT" : "STATE: SPHERE";
+    $("sys-label").style.opacity = E.expoOut(prog(lt, .2, .8));
+    const cx = 540, cy = 900, rad = 380 * (1 - collapse);
+    const c = Math.cos(rot), s = Math.sin(rot);
+    for (const p of PTS) {
+      const x = p.x * c - p.z * s, z = p.x * s + p.z * c;
+      const depth = (z + 2) / 3;
+      ctx.fillStyle = p.red ? `rgba(230,59,30,${depth})` : `rgba(255,255,255,${depth * .9})`;
+      ctx.fillRect(cx + x * rad, cy + p.y * rad, 4 * depth, 4 * depth);
+    }
+    ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(cx, cy, 470 * (1 - collapse), 120 * (1 - collapse), .3, 0, Math.PI * 2); ctx.stroke();
+    if (collapse > 0) {
+      ctx.fillStyle = "#E63B1E";
+      ctx.beginPath(); ctx.arc(cx, cy, 120 * collapse, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  if (id === "data") {
+    CONFIG.stats.forEach(([, val], i) => {
+      const a = i * .25, k = E.expoOut(prog(lt, a, a + .6));
+      $(`card-${i}`).style.transform = `translateY(${lerp(260, 0, k)}px)`;
+      $(`card-${i}`).style.opacity = k;
+      const cnt = E.expoOut(prog(lt, a + .2, a + 1.4));
+      $(`card-val-${i}`).textContent = Math.round(val * cnt).toLocaleString("en-US");
+    });
+    // grafik garis energi di bawah
+    ctx.strokeStyle = "#E63B1E"; ctx.lineWidth = 6; ctx.beginPath();
+    const draw = E.expoOut(prog(lt, .5, d));
+    for (let x = 0; x <= 808 * draw; x += 6) {
+      const y = 1600 + Math.sin(x / 40 + lt * 6) * 50 * Math.sin(x / 260);
+      x === 0 ? ctx.moveTo(136 + x, y) : ctx.lineTo(136 + x, y);
+    }
+    ctx.stroke();
+  }
+  if (id === "rhythm") {
+    for (let i = 0; i < 9; i++) {
+      const dir = i % 2 ? 1 : -1;
+      // bergerak per ketukan: lonjakan cepat lalu diam (step + expoOut)
+      const beatN = Math.floor(lt / BEAT), bk = E.expoOut((lt % BEAT) / BEAT);
+      const off = (beatN + bk) * 420 * dir - 1200;
+      $(`row-${i}`).style.transform = `translateX(${off}px)`;
+    }
+    const close = E.expoIn(prog(lt, d - .3, d));
+    S.rhythm.style.clipPath = `inset(${close * 50}% 0 ${close * 50}% 0)`;
+  }
+  if (id === "outro") {
+    const k = E.expoOut(prog(lt, 0, .8));
+    $("outro-brand").style.transform = `translate(-50%,-50%) translateY(${lerp(120, 0, k)}px)`;
+    $("outro-brand").style.opacity = k;
+    $("outro-brand").style.letterSpacing = `${lerp(.12, -.04, k)}em`;
+    $("outro-role").style.opacity = E.expoOut(prog(lt, .35, 1));
+    $("outro-cta").style.opacity = prog(lt, .7, 1) * (0.6 + 0.4 * Math.abs(Math.cos(t * Math.PI / BEAT)));
+    $("outro-glow").style.transform = `translate(-50%,-50%) scale(${.85 + .15 * Math.sin(t * 2)})`;
+  }
+}
+
+window.renderAt = function (t) {
+  const { fps, duration } = window.MOTION;
+  t = clamp(t, 0, duration - 1e-6);
+  ctx.clearRect(0, 0, 1080, 1920);
+  let cur = SCENES[SCENES.length - 1];
+  for (const s of SCENES) {
+    const on = t >= s.start && t < s.end;
+    S[s.id].style.display = on ? "block" : "none";
+    if (on) cur = s;
+  }
+  renderScene(cur.id, t - cur.start, cur.dur, t);
+  // HUD (warna mengikuti latar scene agar selalu terbaca)
+  $("hud").style.color = cur.hud || "#fff";
+  const f = Math.floor(t * fps);
+  const p2 = n => String(n).padStart(2, "0");
+  $("hud-tc").textContent = `00:00:${p2(Math.floor(t))}:${p2(f % fps)}`;
+  const idx = SCENES.indexOf(cur);
+  $("hud-chapter").textContent = `${p2(idx)}/${p2(SCENES.length - 1)} ${cur.label}`;
+  $("hud-bpm").textContent = `${Math.floor(t / BEAT) % 2 ? "○" : "●"} ${CONFIG.bpm} BPM`;
+  $("hud-bar").style.width = `${(t / duration) * 100}%`;
+};
+
+window.ready = document.fonts.ready.then(() => window.renderAt(0));
+// pratinjau di browser: tambahkan ?play ke URL
+if (location.search.includes("play")) {
+  const t0 = performance.now();
+  (function loop() { window.renderAt(((performance.now() - t0) / 1000) % window.MOTION.duration); requestAnimationFrame(loop); })();
+}
+</script>
+</body>
+</html>
