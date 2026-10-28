@@ -1,6 +1,6 @@
 # Social Marketing — Ghania Ayunda
 
-Paket social marketing (TikTok + Instagram) untuk karakter **Ghania Ayunda**: karakter dewasa, niche OOTD, outfit tips, detail outfit, dan fashion diary dengan estetika feminin.
+Paket social marketing (TikTok + Instagram, ditambah Google Vids untuk video penjelas) untuk karakter **Ghania Ayunda**: karakter dewasa, niche OOTD, outfit tips, detail outfit, dan fashion diary dengan estetika feminin.
 
 **Status:** semua materi masih **draft**. Belum ada yang diproduksi, dijadwalkan, atau diterbitkan. Belum ada visual yang dibuat.
 
@@ -13,6 +13,7 @@ Paket social marketing (TikTok + Instagram) untuk karakter **Ghania Ayunda**: ka
 | [03-paket-produksi.md](social-marketing/03-paket-produksi.md) | Dua video (naskah bertiming + shot list), satu carousel, satu set Stories, caption, dan prompt visual |
 | [04-penawaran-monetisasi.md](social-marketing/04-penawaran-monetisasi.md) | Penilaian 7 jalur monetisasi, kartu penawaran, alur transaksi, dan draft pesan |
 | [05-lembar-evaluasi.md](social-marketing/05-lembar-evaluasi.md) | Lembar pencatatan metrik, aturan keputusan, dan eksperimen minggu depan |
+| [06-framework-google-vids.md](social-marketing/06-framework-google-vids.md) | Framework S.T.Y.L.E. untuk Google Vids: 4 template (pitch, tutorial, laporan, onboarding), prompt, alur produksi, dan checklist |
 
 ## Asumsi yang dipakai (ganti bila berbeda)
 
